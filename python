@@ -1,0 +1,36 @@
+from flask import Flask, render_template, request, send_file
+import tweepy
+app = Flask(__name__)
+@app.route('/')
+def index():
+    return render_template('index.html')
+@app.route('/download', methods=['POST'])
+def download():
+    # Get the Twitter video URL from the form
+    url = request.form['url']
+    # Extract the video ID from the URL
+    video_id = url.split('/')[-1]
+    # Authenticate with Twitter API
+    consumer_key = 'your_consumer_key'
+    consumer_secret = 'your_consumer_secret'
+    access_token = 'your_access_token'
+    access_token_secret = 'your_access_token_secret'
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
+    api = tweepy.API(auth)
+    # Get the video file from Twitter
+    tweet = api.get_status(video_id)
+    media_files = set()
+    media = tweet.entities.get('media', [])
+    if(len(media) > 0):
+        media_files.add(media[0]['media_url'])
+    # Download the video file
+    for media_file in media_files:
+        filename = media_file.split('/')[-1]
+        response = requests.get(media_file)
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+        # Return the video file as a download
+        return send_file(filename, as_attachment=True)
+if name == '__main__':
+    app.run(debug=True)
